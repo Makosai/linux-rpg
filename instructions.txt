@@ -1,0 +1,29 @@
+maps/
+	mapName
+		-mapName.conf
+			ConfName=ConfValue // Use Regex to get the left and right
+					      side or use split to split it in to
+                                              two if possible in bash. Regex seems
+					      faster though.
+					   // Configure the size and perhaps some
+					      other stuff in the future.
+		-mapName.map
+			// Generate the map like so.
+ 1                   2 // everything below here is +=9 * (2 -1) and the next section would be += 9 * (3 - 1). The same goes vertically.
+10X1X2X3X4X5X6X7X8X9X0X1X2X3X4X5X6X7X8X9X
+ 0X1X2X3X4X5X6X7X8X9X0X1X2X3X4X5X6X7X8X9X
+ 0X1X2X3X4X5X6X7X8X9X0X1X2X3X4X5X6X7X8X9X
+ 0X1X2X3X4X5X6X7X8X9X0X1X2X3X4X5X6X7X8X9X
+
+// The only difference is 1 and 2 and 3 won't be presented in the map file and nor will numbers. It will actually look like this
+X X X X X
+X X X X X
+X X X X X
+X X X X X
+
+Where X is the value and the value that comes after it, space, is ignored.
+
+
+Todo:
+-Figure out if you'd have to call "clear" each time the player moves in order to render the map again.
+-Figure out if you can use ASCII symbols to represent different mobs.

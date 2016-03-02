@@ -1,0 +1,60 @@
+#!/bin/bash
+# Author: Kristopher Ali - February 11, 2016
+# This program is a basic text-based rpg.
+
+declare -A map
+
+function draw {
+	for y in `seq 1 10`;
+	do
+		print=""
+		for x in `seq 1 10`;
+		do
+			map[$x,$y]="X"
+			#echo ${map[$x,$y]}
+			if [ -n "${map[$x,$y]}" ]; then
+				print+="${map[$x,$y]} "
+			fi
+		done
+		echo $print
+	done
+}
+
+function loadMap {
+	if [ -n "$1" ]; then
+		counter=0
+		while read line; do
+			case "$counter" in
+				0)
+					maxX=$line
+					;;
+				1)
+					maxY=$line
+					;;
+				2)
+					defaultTile=$line
+					;;					
+				*)
+					regex="\[(\d+),(\d+)\]=?(\w)?(\d?+)"
+					#old regex \[(\d+),(\d+)\]=?(\w)?(\d?+)
+					#new regex 
+					echo $line
+					if [[ $line =~ $regex ]]
+					then
+						echo The regex matches!
+						echo $bash_REMATCH
+						echo ${BASH_REMATCH[1]}
+					fi
+					;;
+			esac
+			((counter++))
+		done < maps/$1
+
+		echo $maxX
+		echo $maxY
+		echo $defaultTile
+	fi
+}
+
+loadMap "dungeon1"
+draw

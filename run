@@ -1,0 +1,191 @@
+#!/bin/bash
+# Author: Kristopher Ali - February 11, 2016
+# This program is a basic text-based rpg.
+
+declare -A map
+declare -A mapData
+
+function draw {
+	clear
+
+	for y in `seq 1 $mapHeight`;
+	do
+		for x in `seq 1 $mapWidth`;
+		do
+			#map[$x,$y]="X"
+			#echo ${map[$x,$y]}
+
+			local mapValue=${map[$x,$y]}
+
+			if [ -n "$mapValue" ]; then
+				echo -e "$mapValue \c"
+			else
+				echo -e "$defaultTile \c"
+			fi
+		done
+		echo ""
+	done
+}
+
+function move {
+	draw
+	while true; do
+		read -rsn1 -p "WASD to Move" step
+		case $step in
+			[wW]* )
+				step "north";
+				draw;;
+
+			[sS]* )
+				step "south";
+				draw;;
+
+			[dD]* )
+				step "east";
+				draw;;
+
+			[aA]* )
+				step "west"
+				draw;;
+
+			* )
+				echo "Invalid entry.";;
+		esac
+	done
+}
+
+function step {
+	if [ $1 ]; then
+		case $1 in
+			north)
+				#if playerY - 1 is less than or equal to the minimum
+				#bound, or zero. If so, cancel this.
+
+				#if map[playerX,playerY-1] == mapData["dense"] then
+				#block their movement by telling them there is
+				#something there and then cancelling the movement.
+
+				#if map[,-1]==mapData[enemy] then run the temp fight
+
+				#if map[,-1]==mapData[star] then run the temp boost
+
+				#if map[,-1]==mapData[goal] then run the you win text
+
+				#consider using case for this since there's a pattern
+				#map[,-1] is the pattern and mapdata is the case.
+				
+				map[$playerX,$playerY]=" ";
+				((playerY--));
+				map[$playerX,$playerY]=${mapData["player"]};;
+
+			south)
+				map[$playerX,$playerY]=" ";
+				((playerY++));
+				map[$playerX,$playerY]=${mapData["player"]};;
+
+			east)
+				map[$playerX,$playerY]=" ";
+				((playerX++));
+				map[$playerX,$playerY]=${mapData["player"]};;
+
+
+			west)
+				map[$playerX,$playerY]=" ";
+				((playerX--));
+				map[$playerX,$playerY]=${mapData["player"]};;
+
+			*)
+				echo "Invalid movement presented."
+		esac
+	fi
+}
+
+function loadMap {
+	if [ -n "$1" ]; then
+		local counter=0
+		while read line; do
+			local regex="(\s*[^.!?=\\\n]*[\w]*)=(\s*[^.!?=\\\n]*[\w]*)"
+			
+			if [[ $line =~ $regex ]]; then
+				local param=${BASH_REMATCH[1]}
+				local value=${BASH_REMATCH[2]}
+
+				case ${param,,} in
+					mapwidth)
+						mapWidth=$value;;
+
+					mapheight)
+						mapHeight=$value;;
+
+					defaulttile)
+						defaultTile=$value;;
+
+					*)
+						echo "$line is an unhandled parameter."
+				esac
+			fi
+		done < maps/$1/$1.config
+
+		while read line; do
+			local regex="([^=]+)=(.*)"
+
+			if [[ $line =~ $regex ]]; then
+				local param=${BASH_REMATCH[2]}
+				local value=${BASH_REMATCH[1]}
+
+				echo "TT $param TT"
+
+				case ${param,,} in
+					player)
+						mapData["player"]=$value;;
+					
+					enemy)
+						mapData["enemy"]=$value;;
+					
+					dense)
+						mapData["dense"]=$value;;
+
+					star)
+						mapData["star"]=$value;;
+
+					*)
+						echo "$line is an unknown map data entry.";;
+				esac
+
+			else
+				echo $line
+			fi	
+		done < maps/$1/$1.data
+
+		echo ${mapData["player"]}
+
+		local y=1
+		local x2=0
+
+		while read line; do
+			x2=0
+			for x in `seq 1 $mapWidth`;
+			do
+				map[$x,$y]=${line:$((x-1+x2)):1}
+
+				if [[ "${map[$x,$y]}" == "${mapData["player"]}" ]]; then
+					playerX=$x
+					playerY=$y
+					echo "Player data set! | ${map[$x,$y]} equals ${mapData["player"]}"
+				fi
+
+				((x2++))
+			done
+			((y++))
+
+			if [ $y -gt $mapHeight ]; then
+				break
+			fi
+		done < maps/$1/$1.map
+	fi
+
+
+}
+
+loadMap "dungeon1"
+move
