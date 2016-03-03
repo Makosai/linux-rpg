@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 # Author: Kristopher Ali - February 11, 2016
 # This program is a basic text-based rpg.
 
@@ -30,7 +30,7 @@ function draw {
 function move {
 	draw
 	while true; do
-		read -rsn1 -p "WASD to Move" step
+		read -rsn1 -p "WASD to Move | Q to quit to menu (no menu atm)" step
 		case $step in
 			[wW]* )
 				step "north";
@@ -48,6 +48,10 @@ function move {
 				step "west"
 				draw;;
 
+			[qQ]* )
+				echo "";
+				exit;;
+
 			* )
 				echo "Invalid entry.";;
 		esac
@@ -55,41 +59,79 @@ function move {
 }
 
 function step {
+	draw
+	local nextPos=0
 	if [ $1 ]; then
 		case $1 in
 			north)
-				#if playerY - 1 is less than or equal to the minimum
-				#bound, or zero. If so, cancel this.
+				nextPos=$((playerY-1));
 
-				#if map[playerX,playerY-1] == mapData["dense"] then
-				#block their movement by telling them there is
-				#something there and then cancelling the movement.
+				if [[ $nextPos < $minYBorder ]]; then
+					echo "You are at the edge of the map!";
+					continue;
+				fi
 
-				#if map[,-1]==mapData[enemy] then run the temp fight
+				case ${map[$playerX,$nextPos]} in
+					${mapData["dense"]})
+						echo "There is something in the way!"
+						continue;
+				esac
 
-				#if map[,-1]==mapData[star] then run the temp boost
-
-				#if map[,-1]==mapData[goal] then run the you win text
-
-				#consider using case for this since there's a pattern
-				#map[,-1] is the pattern and mapdata is the case.
-				
 				map[$playerX,$playerY]=" ";
 				((playerY--));
 				map[$playerX,$playerY]=${mapData["player"]};;
 
 			south)
+				nextPos=$((playerY+1));
+
+				if [[ $nextPos < $maxYBorder ]]; then
+					echo "You are at the edge of the map!";
+					continue;
+				fi
+
+				case ${map[$playerX,$nextPos]} in
+					${mapData["dense"]})
+						echo "There is something in the way!"
+						continue;
+				esac
+
 				map[$playerX,$playerY]=" ";
 				((playerY++));
 				map[$playerX,$playerY]=${mapData["player"]};;
 
 			east)
+				nextPos=$((playerX+1));
+
+				if [[ $nextPos < $maxXBorder ]]; then
+					echo "You are at the edge of the map!";
+					continue;
+				fi
+
+				case ${map[$nextPos,$playerY]} in
+					${mapData["dense"]})
+					echo "There is something in the way!"
+					continue;
+				esac
+
 				map[$playerX,$playerY]=" ";
 				((playerX++));
 				map[$playerX,$playerY]=${mapData["player"]};;
 
 
 			west)
+				nextPos=$((playerX-1));
+
+				if [[ $nextPos < $minXBorder ]]; then
+					echo "You are at the edge of the map!";
+					continue;
+				fi
+
+				case ${map[$nextPos,$playerY]} in
+					${mapData["dense"]})
+						echo "There is something in the way!"
+						continue;
+				esac
+
 				map[$playerX,$playerY]=" ";
 				((playerX--));
 				map[$playerX,$playerY]=${mapData["player"]};;
@@ -125,6 +167,11 @@ function loadMap {
 				esac
 			fi
 		done < maps/$1/$1.config
+
+		minYBorder=1
+		maxYBorder=$mapHeight
+		minXBorder=1
+		maxXBorder=$mapWidth
 
 		while read line; do
 			local regex="([^=]+)=(.*)"
