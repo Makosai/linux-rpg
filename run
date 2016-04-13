@@ -4,33 +4,36 @@
 
 declare -A map
 declare -A mapData
+menuMsg="WASD to MOVE | Q to quit to menu (no menu atm)"
 
 function draw {
-	clear
-
 	for y in `seq 1 $mapHeight`;
 	do
 		for x in `seq 1 $mapWidth`;
 		do
-			#map[$x,$y]="X"
-			#echo ${map[$x,$y]}
-
 			local mapValue=${map[$x,$y]}
 
 			if [ -n "$mapValue" ]; then
-				echo -e "$mapValue \c"
+				output="$output$mapValue "
 			else
-				echo -e "$defaultTile \c"
+				output="$output$defaultTile "
 			fi
 		done
-		echo ""
+		output="$output\n"
 	done
+
+	clear
 }
 
 function move {
 	draw
+	output="$output$menuMsg\n"
+
 	while true; do
-		read -rsn1 -p "WASD to Move | Q to quit to menu (no menu atm)" step
+		printf "$output";
+		output=""
+
+		read -rsn1 step
 		case $step in
 			[wW]* )
 				step "north";
@@ -45,17 +48,25 @@ function move {
 				draw;;
 
 			[aA]* )
-				step "west"
+				step "west";
 				draw;;
 
 			[qQ]* )
-				echo "";
 				exit;;
 
 			* )
-				echo "Invalid entry.";;
+				draw;
+				output="${output}Invalid entry.\n";;
 		esac
+
+		output="$output$menuMsg\n";
 	done
+}
+
+function buffput {
+	output="$output$1"
+	# should add param to output and have an option to print it
+	# immediate after or other things 
 }
 
 function step {
@@ -67,13 +78,13 @@ function step {
 				nextPos=$((playerY-1));
 
 				if [[ $nextPos < $minYBorder ]]; then
-					echo "You are at the edge of the map!";
+					output="${output}You are at the edge of the map!\n";
 					continue;
 				fi
 
 				case ${map[$playerX,$nextPos]} in
 					${mapData["dense"]})
-						echo "There is something in the way!"
+						output="${output}There is something in the way!\n"
 						continue;
 				esac
 
@@ -85,13 +96,13 @@ function step {
 				nextPos=$((playerY+1));
 
 				if [[ $nextPos < $maxYBorder ]]; then
-					echo "You are at the edge of the map!";
+					output="${output}You are at the edge of the map!\n";
 					continue;
 				fi
 
 				case ${map[$playerX,$nextPos]} in
 					${mapData["dense"]})
-						echo "There is something in the way!"
+						output="${output}There is something in the way!\n"
 						continue;
 				esac
 
@@ -103,14 +114,14 @@ function step {
 				nextPos=$((playerX+1));
 
 				if [[ $nextPos < $maxXBorder ]]; then
-					echo "You are at the edge of the map!";
+					output="${output}You are at the edge of the map!\n";
 					continue;
 				fi
 
 				case ${map[$nextPos,$playerY]} in
 					${mapData["dense"]})
-					echo "There is something in the way!"
-					continue;
+						output="${output}There is something in the way!\n"
+						continue;
 				esac
 
 				map[$playerX,$playerY]=" ";
@@ -122,13 +133,13 @@ function step {
 				nextPos=$((playerX-1));
 
 				if [[ $nextPos < $minXBorder ]]; then
-					echo "You are at the edge of the map!";
+					output="${output}You are at the edge of the map!\n";
 					continue;
 				fi
 
 				case ${map[$nextPos,$playerY]} in
 					${mapData["dense"]})
-						echo "There is something in the way!"
+						output="${output}There is something in the way!\n";
 						continue;
 				esac
 
@@ -137,7 +148,7 @@ function step {
 				map[$playerX,$playerY]=${mapData["player"]};;
 
 			*)
-				echo "Invalid movement presented."
+				output="${output}Invalid movement presented.\n";
 		esac
 	fi
 }
